@@ -75,6 +75,69 @@ def encode_integer(value):
         ])
 
 # ==========================================
+# OID ASN.1 BER
+# ==========================================
+
+def oid_text_to_ber(oid_text):
+    parts = oid_text.split(".")
+    if len(parts) < 2:
+        raise ValueError("OID deve ter pelo menos dois componentes")
+
+    numbers = []
+    for part in parts:
+        if part == "":
+            raise ValueError("OID invalido")
+        value = int(part)
+        if value < 0:
+            raise ValueError("OID nao pode ter componente negativo")
+        numbers.append(value)
+
+    first = numbers[0]
+    second = numbers[1]
+    if first > 2:
+        raise ValueError("Primeiro componente do OID deve ser 0, 1 ou 2")
+    if first < 2 and second > 39:
+        raise ValueError("Segundo componente deve ser menor que 40 quando o primeiro e 0 ou 1")
+
+    encoded = bytearray()
+    encoded.append(40 * first + second)
+
+    for value in numbers[2:]:
+        stack = [value & 0x7f]
+        value >>= 7
+        while value > 0:
+            stack.insert(0, 0x80 | (value & 0x7f))
+            value >>= 7
+        encoded.extend(stack)
+
+    return bytes(encoded)
+
+
+def oid_ber_to_text(oid_ber):
+    if len(oid_ber) == 0:
+        raise ValueError("OID BER vazio")
+
+    first_byte = oid_ber[0]
+    if first_byte < 40:
+        numbers = [0, first_byte]
+    elif first_byte < 80:
+        numbers = [1, first_byte - 40]
+    else:
+        numbers = [2, first_byte - 80]
+
+    value = 0
+    for byte in oid_ber[1:]:
+        value = (value << 7) | (byte & 0x7f)
+        if byte & 0x80 == 0:
+            numbers.append(value)
+            value = 0
+
+    if value != 0:
+        raise ValueError("OID BER incompleto")
+
+    return ".".join([str(number) for number in numbers])
+
+# ==========================================
 # WIFI
 # ==========================================
 
@@ -95,10 +158,10 @@ print("IP:", ip)
 # OIDs
 # ==========================================
 
-SYS_DESCR_OID = b'\x2b\x06\x01\x02\x01\x01\x01\x00'
-SYS_UPTIME_OID = b'\x2b\x06\x01\x02\x01\x01\x03\x00'
-LED_OID = b'\x2b\x06\x01\x04\x01\xa6\x70\x01\x00'
-TEMP_OID = b'\x2b\x06\x01\x04\x01\xa6\x70\x02\x00'
+SYS_DESCR_OID = oid_text_to_ber("1.3.6.1.2.1.1.1.0")
+SYS_UPTIME_OID = oid_text_to_ber("1.3.6.1.2.1.1.3.0")
+LED_OID = oid_text_to_ber("1.3.6.1.4.1.4976.1.0")
+TEMP_OID = oid_text_to_ber("1.3.6.1.4.1.4976.2.0")
 
 # ==========================================
 # SOCKET SNMP
@@ -206,6 +269,8 @@ while True:
     else:
         print("OID desconhecida")
         continue
+
+    print("OID:", oid_ber_to_text(oid))
 
     # ======================================
     # VARBIND
