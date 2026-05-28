@@ -2,6 +2,8 @@
 
 > Biblioteca SNMP v1 minimalista para **MicroPython** — desenvolvida para fins acadêmicos no IFRN.
 
+**Idiomas:** [Português](README.md) | [English](README.en.md) | [Español](README.es.md) | [Français](README.fr.md)
+
 [![MicroPython](https://img.shields.io/badge/MicroPython-1.20%2B-blue)](https://micropython.org/)
 [![SNMP](https://img.shields.io/badge/SNMP-v1%20%28RFC%201157%29-green)](https://www.rfc-editor.org/rfc/rfc1157)
 [![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-orange)](LICENSE)
